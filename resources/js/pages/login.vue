@@ -22,36 +22,48 @@
         </div>
     </div>
 </template>
+
 <script>
-    import { reactive,ref } from 'vue'
-    import { useRouter } from "vue-router"
-    import { useStore } from 'vuex'
-    export default{
-        setup(){
-            const router = useRouter()
-            const store = useStore()
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import axios from 'axios'
 
-            let form = reactive({
-                email: '',
-                password: ''
-            });
-            let error = ref('')
+export default {
+    setup() {
+        const router = useRouter()
+        const store = useStore()
 
-            const login = async() =>{
-                await axios.post('/api/login',form).then(res=>{
-                    if(res.data.success){
-                        store.dispatch('setToken',res.data.data.token);
-                        router.push({name:'Dashboard'})
-                    }else{
-                        error.value = res.data.message;
-                    }
-                })
-            }
-            return{
-                form,
-                login,
-                error
+        let form = reactive({
+            email: '',
+            password: ''
+        });
+        let error = ref('')
+
+        const login = async () => {
+            error.value = ''  // Reset the error message
+            try {
+                let response = await axios.post('/api/login', form)
+                if (response.data.status) {
+                    store.dispatch('setToken', response.data.token)
+                    router.push({ name: 'Dashboard' })
+                } else {
+                    error.value = response.data.message
+                }
+            } catch (e) {
+                if (e.response && e.response.data && e.response.data.message) {
+                    error.value = e.response.data.message
+                } else {
+                    error.value = 'An unexpected error occurred. Please try again.'
+                }
             }
         }
+
+        return {
+            form,
+            login,
+            error
+        }
     }
+}
 </script>

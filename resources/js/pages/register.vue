@@ -23,8 +23,8 @@
                         <input type="password" class="form-control" id="password" v-model="form.password">
                     </div>
                     <div class="form-group">
-                        <label for="c_password">Confirm Password:</label>
-                        <input type="password" class="form-control" id="c_password" v-model="form.c_password">
+                        <label for="confirm_password">Confirm Password:</label>
+                        <input type="password" class="form-control" id="confirm_password" v-model="form.confirm_password">
                     </div>
 
                     <button type="submit" class="btn btn-primary">Register</button>
@@ -33,38 +33,48 @@
         </div>
     </div>
 </template>
+
 <script>
-    import { reactive,ref } from 'vue'
-    import { useRouter } from "vue-router"
-    import { useStore } from 'vuex'
-    export default{
-        setup(){
-            const router = useRouter()
-            const store = useStore()
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 
-            let form = reactive({
-                name :'',
-                email: '',
-                password: '',
-                c_password: '',
-            });
-            let errors = ref([])
+export default {
+    setup() {
+        const router = useRouter()
+        const store = useStore()
 
-            const register = async() =>{
-                await axios.post('/api/register',form).then(res=>{
-                    if(res.data.success){
-                        store.dispatch('setToken',res.data.data.token)
-                        router.push({name:'Dashboard'})
-                    }
-                }).catch(e=>{
-                    errors.value = e.response.data.message
-                })
-            }
-            return{
-                form,
-                register,
-                errors
+        let form = reactive({
+            name: '',
+            email: '',
+            password: '',
+            confirm_password: ''
+        });
+        let errors = ref([])
+
+        const register = async () => {
+            try {
+                let response = await axios.post('/api/register', form)
+                if (response.data.status) {
+                    store.dispatch('setToken', response.data.token)
+                    router.push({ name: 'Dashboard' })
+                } else {
+                    errors.value = response.data.errors
+                }
+            } catch (e) {
+                if (e.response && e.response.data && e.response.data.errors) {
+                    errors.value = e.response.data.errors
+                } else {
+                    errors.value = ['An unexpected error occurred. Please try again.']
+                }
             }
         }
+
+        return {
+            form,
+            register,
+            errors
+        }
     }
+}
 </script>
