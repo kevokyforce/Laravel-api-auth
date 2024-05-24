@@ -10,31 +10,29 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function register (Request $reqest)
+    public function register(Request $request)
     {
-       try {
-        $validate = Validator::make($reqest->all(),
-        [
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required| min:4',
-            'confirm_password' => 'required|same:password',
-        ]);
+        try {
+            $validate = Validator::make($request->all(), [
+                'name' => 'required',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:4',
+                'confirm_password' => 'required|same:password',
+            ]);
 
-        if($validate->fails()){
-            return response()->json([
-                'status' => false,
-                'message' => 'validation error',
-                'errors' => $validate->errors()
-            ], 400);
-        }
+            if ($validate->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validate->errors()
+                ], 400);
+            }
 
-        $user = User::create([
-            'name' => $reqest->name,
-            'email' => $reqest->email,
-            'password' => bcrypt($reqest->password),
-
-        ]);
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+            ]);
 
             return response()->json([
                 'status' => true,
@@ -42,44 +40,38 @@ class AuthController extends Controller
                 'token' => $user->createToken("API TOKEN")->plainTextToken
             ], 200);
 
-       } catch (\Throwable $th) {
-
-        return response()->json([
-            'status' => false,
-            'message' => $th->getMessage(),
-        ], 500);
-
-       }
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => false,
+                'message' => $th->getMessage(),
+            ], 500);
+        }
     }
 
-    //  Login User
-    public function login (Request $reqest)
+    public function login(Request $request)
     {
-        try 
-        {
-            $validate = Validator::make($reqest->all(),
-            [
-                'email' => 'required|email| exist:users' ,
-                'password' => 'required| min:4',
+        try {
+            $validate = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email',
+                'password' => 'required|min:4',
             ]);
-    
-            if($validate->fails()){
+
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'validation error',
+                    'message' => 'Validation error',
                     'errors' => $validate->errors()
                 ], 400);
             }
 
-            if(!Auth::attempt($reqest->only(['email', 'password']))) {
-                
+            if (!Auth::attempt($request->only(['email', 'password']))) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Email or Password Does Not Match Our Records',
                 ], 400);
             }
 
-            $user = User::where('email', $reqest->email)->first();
+            $user = User::where('email', $request->email)->first();
 
             return response()->json([
                 'status' => true,
@@ -95,7 +87,8 @@ class AuthController extends Controller
         }
     }
 
-    public function profile() {
+    public function profile()
+    {
         $userData = auth()->user();
         return response()->json([
             'status' => true,
